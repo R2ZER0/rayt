@@ -6,6 +6,12 @@
 #include "sphere.hpp"
 #include "camera.hpp"
 
+extern double drand48(void);
+
+float get_rand() {
+    return (float)drand48();
+}
+
 vec3 calc_colour(const ray& r, hitable* world) {
     hit_record rec;
     if(world->hit(r, 0.0, FLT_MAX, rec)) {
@@ -23,6 +29,7 @@ struct imagedata {
 
 
 void print_imagedata(imagedata& img) {
+        int ns = 4;
 
         hitable* list[2];
         list[0] = new sphere(vec3(0,0.2,-1), 0.5);
@@ -37,11 +44,19 @@ void print_imagedata(imagedata& img) {
                 std::cout << "# Line " << img.ys-j << '\n';
 
                 for(int i = 0; i < img.xs; ++i) {
-                        float u = float(i) / float(img.xs);
-                        float v = float(j) / float(img.ys);
 
-                        ray r = cam.get_ray(u, v);
-                        vec3 colour = calc_colour(r, world);
+                        vec3 colour(0.0, 0.0, 0.0);
+                        
+                        for(int s = 0; s < ns; ++s) {
+
+                            float u = float(i + get_rand()) / float(img.xs);
+                            float v = float(j + get_rand()) / float(img.ys);
+
+                            ray r = cam.get_ray(u, v);
+                            colour += calc_colour(r, world);
+                        }
+
+                        colour /= float(ns);
 
                         int ir = int(255.99 * colour.r());
                         int ig = int(255.99 * colour.g());
