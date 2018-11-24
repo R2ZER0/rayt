@@ -5,27 +5,24 @@
 #include "hitable_list.hpp"
 #include "sphere.hpp"
 #include "camera.hpp"
+#include "material.hpp"
+#include "lambertian.hpp"
+#include "metal.hpp"
+#include "random.hpp"
 
-extern double drand48(void);
+#define DEPTH_LIMIT 50
 
-float get_rand() {
-    return (float)drand48();
-}
-
-vec3 random_in_unit_sphere() {
-    vec3 p;
-    do {
-        p = 2.0 * vec3(get_rand(), get_rand(), get_rand()) - vec3(1, 1, 1);
-    } while(p.squared_length() >= 1.0);
-    return p;
-}
-
-vec3 calc_colour(const ray& r, hitable* world) {
+vec3 calc_colour(const ray& r, hitable* world, int depth) {
     hit_record rec;
     if(world->hit(r, 0.001, FLT_MAX, rec)) {
-        // Instead of supplying a colour, bounce the ray randomly/diffusely
-        vec3 target = rec.p + rec.normal + random_in_unit_sphere();
-        return 0.5*calc_colour(ray(rec.p, target-rec.p), world);
+        ray scattered;
+        vec3 attenuation;
+
+        if(depth < 50 && rec.mat->scatter(r, rec, attenuation, scattered)) {
+            return attenuation * calc_colour(scattered, world, depth+1);
+        } else {
+            return vec3(0, 0, 0);
+        } 
     } else {
         vec3 unit_direction = unit_vector(r.direction());
         float t = 0.5*(unit_direction.y() + 1.0);
@@ -39,12 +36,15 @@ struct imagedata {
 
 
 void print_imagedata(imagedata& img) {
-        int ns = 48;
+        int ns = 100;
+        bool multisample = true;
 
-        hitable* list[2];
-        list[0] = new sphere(vec3(0,0.0,-1), 0.5);
-        list[1] = new sphere(vec3(0,-100.5,-1), 100);
-        hitable* world = new hitable_list(list, 2);
+        hitable* list[4];
+        list[0] = new sphere(vec3(0,0.0,-1), 0.5, new lambertian(vec3(0.8, 0.3, 0.3)));
+        list[1] = new sphere(vec3(0,-100.5,-1), 100, new lambertian(vec3(0.8, 0.8, 0.0)));
+        list[2] = new sphere(vec3(1,0,-1), 0.5, new metal(vec3(0, 0.6, 0.2))); 
+        list[3] = new sphere(vec3(-1,0,-1), 0.5, new metal(vec3(0.8, 0.8, 0.8)));
+        hitable* world = new hitable_list(list, 4);
 
         camera cam;
 
@@ -56,18 +56,28 @@ void print_imagedata(imagedata& img) {
                 for(int i = 0; i < img.xs; ++i) {
 
                         vec3 colour(0.0, 0.0, 0.0);
-                        
-                        for(int s = 0; s < ns; ++s) {
+                       
+                        if(multisample) { 
+                            for(int s = 0; s < ns; ++s) {
 
-                            float u = float(i + get_rand()) / float(img.xs);
-                            float v = float(j + get_rand()) / float(img.ys);
+                                float u = float(i + get_rand()) / float(img.xs);
+                                float v = float(j + get_rand()) / float(img.ys);
+
+                                ray r = cam.get_ray(u, v);
+                                colour += calc_colour(r, world, 0);
+                            }
+
+                            // correct for number of samples
+                            colour /= float(ns);
+
+                        } else {
+                            float u = float(i + 0.5) / float(img.xs);
+                            float v = float(j + 0.5) / float(img.ys);
 
                             ray r = cam.get_ray(u, v);
-                            colour += calc_colour(r, world);
+                            colour = calc_colour(r, world, 0); 
                         }
 
-                        // correct for number of samples
-                        colour /= float(ns); 
                         // Gammar correction
                         colour = vec3( sqrt(colour[0]), sqrt(colour[1]), sqrt(colour[2]) );
                         
