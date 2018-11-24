@@ -12,10 +12,20 @@ float get_rand() {
     return (float)drand48();
 }
 
+vec3 random_in_unit_sphere() {
+    vec3 p;
+    do {
+        p = 2.0 * vec3(get_rand(), get_rand(), get_rand()) - vec3(1, 1, 1);
+    } while(p.squared_length() >= 1.0);
+    return p;
+}
+
 vec3 calc_colour(const ray& r, hitable* world) {
     hit_record rec;
-    if(world->hit(r, 0.0, FLT_MAX, rec)) {
-        return 0.5*vec3(rec.normal.x()+1, rec.normal.y()+1, rec.normal.z()+1);
+    if(world->hit(r, 0.001, FLT_MAX, rec)) {
+        // Instead of supplying a colour, bounce the ray randomly/diffusely
+        vec3 target = rec.p + rec.normal + random_in_unit_sphere();
+        return 0.5*calc_colour(ray(rec.p, target-rec.p), world);
     } else {
         vec3 unit_direction = unit_vector(r.direction());
         float t = 0.5*(unit_direction.y() + 1.0);
@@ -29,10 +39,10 @@ struct imagedata {
 
 
 void print_imagedata(imagedata& img) {
-        int ns = 4;
+        int ns = 48;
 
         hitable* list[2];
-        list[0] = new sphere(vec3(0,0.2,-1), 0.5);
+        list[0] = new sphere(vec3(0,0.0,-1), 0.5);
         list[1] = new sphere(vec3(0,-100.5,-1), 100);
         hitable* world = new hitable_list(list, 2);
 
@@ -56,8 +66,12 @@ void print_imagedata(imagedata& img) {
                             colour += calc_colour(r, world);
                         }
 
-                        colour /= float(ns);
-
+                        // correct for number of samples
+                        colour /= float(ns); 
+                        // Gammar correction
+                        colour = vec3( sqrt(colour[0]), sqrt(colour[1]), sqrt(colour[2]) );
+                        
+                        // convert colour to integers for output
                         int ir = int(255.99 * colour.r());
                         int ig = int(255.99 * colour.g());
                         int ib = int(255.99 * colour.b());
