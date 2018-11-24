@@ -4,6 +4,7 @@
 #include <cfloat>
 #include "hitable_list.hpp"
 #include "sphere.hpp"
+#include "camera.hpp"
 
 vec3 calc_colour(const ray& r, hitable* world) {
     hit_record rec;
@@ -22,15 +23,13 @@ struct imagedata {
 
 
 void print_imagedata(imagedata& img) {
-        vec3 lower_left_corner(-2.0, -1.0, -1.0);
-        vec3 horizontal(4.0, 0.0, 0.0);
-        vec3 vertical(0.0, 2.0, 0.0);
-        vec3 origin(0.0, 0.0, 0.0);
 
         hitable* list[2];
-        list[0] = new sphere(vec3(0,0,-1), 0.5);
+        list[0] = new sphere(vec3(0,0.2,-1), 0.5);
         list[1] = new sphere(vec3(0,-100.5,-1), 100);
         hitable* world = new hitable_list(list, 2);
+
+        camera cam;
 
         std::cout << "P3\n" << img.xs << ' ' << img.ys << "\n255\n";
 
@@ -41,7 +40,7 @@ void print_imagedata(imagedata& img) {
                         float u = float(i) / float(img.xs);
                         float v = float(j) / float(img.ys);
 
-                        ray r(origin, lower_left_corner + u*horizontal + v*vertical);
+                        ray r = cam.get_ray(u, v);
                         vec3 colour = calc_colour(r, world);
 
                         int ir = int(255.99 * colour.r());
