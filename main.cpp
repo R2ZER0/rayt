@@ -60,17 +60,20 @@ struct imagedata {
         vec3* colourdata;
 };
 
-void render_to_imagedata(hitable* world, imagedata& img) {
+// render_callback(void* userdata, int x, int y, vec3 rgb);
+typedef void (*render_callback_t)(void*, int, int, vec3);
+
+void render(hitable* world, int xs, int ys, render_callback_t callback, void* userdata) {
     const camera cam;
 
     #ifdef RAYT_OPENMP
     #pragma omp parallel for
     #endif
-    for(int j = 0; j < img.ys; ++j) {
+    for(int j = 0; j < ys; ++j) {
             #ifdef RAYT_OPENMP
             #pragma omp parallel for
             #endif
-            for(int i = 0; i < img.xs; ++i) {
+            for(int i = 0; i < xs; ++i) {
 
                     vec3 colour(0.0, 0.0, 0.0);
                     
@@ -88,8 +91,8 @@ void render_to_imagedata(hitable* world, imagedata& img) {
                         colour /= float(ns);
 
                     #else
-                        float u = float(i + 0.5) / float(img.xs);
-                        float v = float(j + 0.5) / float(img.ys);
+                        float u = float(i + 0.5) / float(xs);
+                        float v = float(j + 0.5) / float(ys);
 
                         ray r = cam.get_ray(u, v);
                         colour = calc_colour(r, world, 0); 
@@ -98,17 +101,26 @@ void render_to_imagedata(hitable* world, imagedata& img) {
                     // Gammar correction
                     colour = vec3( sqrt(colour[0]), sqrt(colour[1]), sqrt(colour[2]) );
 
-                    int idx = (img.ys-j-1)*img.xs + i;
-                    if(idx > img.xs*img.ys || idx < 0) {
-                        #ifdef RAYT_LINUX
-                        std::cerr << "Index out of range! " << idx << "i,j = " << i << ',' << j << '\n';
-                        #endif
-                    } else {
-                        img.colourdata[idx] = colour;
-                    }
-                    
+                    callback(userdata, i, j, colour);
             }
     }
+}
+
+void _render_callback_to_imagedata(void* userdata, int x, int y, vec3 colour) {
+    imagedata* img = (imagedata*)userdata;
+    int idx = (img->ys-y-1)*img->xs + x;
+    if(idx > img->xs*img->ys || idx < 0) {
+        #ifdef RAYT_LINUX
+        std::cerr << "Index out of range! " << idx << "i,j = " << x << ',' << y << '\n';
+        #endif
+    } else {
+        img->colourdata[idx] = colour;
+
+    }
+}
+
+void render_to_imagedata(hitable* world, imagedata& img) {
+    render(world, img.xs, img.ys, _render_callback_to_imagedata, (void*)&img);
 }
 
 #ifdef RAYT_LINUX
