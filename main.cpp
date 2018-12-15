@@ -60,20 +60,8 @@ struct imagedata {
         vec3* colourdata;
 };
 
-void render_to_imagedata(imagedata& img) {
-    hitable* list[4];
-    list[0] = new sphere(vec3(0,0.0,-1), 0.5, new lambertian(vec3(0.8, 0.3, 0.3)));
-    //list[0] = new sphere(vec3(0,0.0,-1), 0.5, new dielectric(1.5));
-    list[1] = new sphere(vec3(0,-100.5,-1), 100, new lambertian(vec3(0.8, 0.8, 0.0)));
-    list[2] = new sphere(vec3(1,0,-1), 0.5, new metal(vec3(0, 0.6, 0.2), 0.3)); 
-    //list[3] = new sphere(vec3(-1,0,-1), 0.5, new dielectric(1.1));
-    list[3] = new sphere(vec3(-1,0,-1), 0.5, new metal(vec3(0.9, 0.9, 0.9), 0.0));
-    hitable* world = new hitable_list(list, 4);
-
+void render_to_imagedata(hitable* world, imagedata& img) {
     const camera cam;
-
-
-    //vec3 imagedata[img.xs * img.ys];
 
     #ifdef RAYT_OPENMP
     #pragma omp parallel for
@@ -123,33 +111,43 @@ void render_to_imagedata(imagedata& img) {
     }
 }
 
-
+#ifdef RAYT_LINUX
 void print_imagedata(imagedata& img) {
     #ifdef RAYT_MULTISAMPLE
         const int ns = 100;
     #endif
 
-        
+    std::cout << "P3\n" << img.xs << ' ' << img.ys << "\n255\n";
+    for(int p = 0; p < img.xs*img.ys; ++p) {
+        vec3 colour = img.colourdata[p];
 
-        std::cout << "P3\n" << img.xs << ' ' << img.ys << "\n255\n";
-        for(int p = 0; p < img.xs*img.ys; ++p) {
-            vec3 colour = img.colourdata[p];
+        // convert colour to integers for output
+        int ir = int(255.99 * colour.r());
+        int ig = int(255.99 * colour.g());
+        int ib = int(255.99 * colour.b());
 
-            // convert colour to integers for output
-            int ir = int(255.99 * colour.r());
-            int ig = int(255.99 * colour.g());
-            int ib = int(255.99 * colour.b());
-
-            std::cout << ir << ' ' << ig << ' ' << ib << '\n';
-        }
+        std::cout << ir << ' ' << ig << ' ' << ib << '\n';
+    }
 }
+#endif
 
+
+// Global scene data
 vec3 colourdata[RAYT_IMAGE_WIDTH * RAYT_IMAGE_HEIGHT];
 imagedata image = { RAYT_IMAGE_WIDTH, RAYT_IMAGE_HEIGHT, &colourdata[0] };
 
 #ifdef RAYT_LINUX
 int main() {
-    render_to_imagedata(image);
+    hitable* list[4];
+    list[0] = new sphere(vec3(0,0.0,-1), 0.5, new lambertian(vec3(0.8, 0.3, 0.3)));
+    //list[0] = new sphere(vec3(0,0.0,-1), 0.5, new dielectric(1.5));
+    list[1] = new sphere(vec3(0,-100.5,-1), 100, new lambertian(vec3(0.8, 0.8, 0.0)));
+    list[2] = new sphere(vec3(1,0,-1), 0.5, new metal(vec3(0, 0.6, 0.2), 0.3)); 
+    //list[3] = new sphere(vec3(-1,0,-1), 0.5, new dielectric(1.1));
+    list[3] = new sphere(vec3(-1,0,-1), 0.5, new metal(vec3(0.9, 0.9, 0.9), 0.0));
+    hitable* world = new hitable_list(list, 4);
+
+    render_to_imagedata(world, image);
     print_imagedata(image);
 }
 #endif
