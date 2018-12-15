@@ -9,7 +9,7 @@ float get_rand() {
 }
 
 #elif defined(RAYT_LINUX)
-extern double drand48(void);
+#include <stdlib.h>
 
 float get_rand() {
     return (float)drand48();

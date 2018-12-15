@@ -136,18 +136,30 @@ void print_imagedata(imagedata& img) {
 vec3 colourdata[RAYT_IMAGE_WIDTH * RAYT_IMAGE_HEIGHT];
 imagedata image = { RAYT_IMAGE_WIDTH, RAYT_IMAGE_HEIGHT, &colourdata[0] };
 
+lambertian sphere1_material(vec3(0.8, 0.3, 0.3));
+sphere sphere1_object(vec3(0,0.0,-1), 0.5, &sphere1_material);
+
+lambertian sphere2_material(vec3(0.8, 0.8, 0.0));
+sphere sphere2_object(vec3(0,-100.5,-1), 100, &sphere2_material);
+
+metal sphere3_material(vec3(0, 0.6, 0.2), 0.3);
+sphere sphere3_object(vec3(1,0,-1), 0.5, &sphere3_material);
+
+metal sphere4_material(vec3(0.9, 0.9, 0.9), 0.0);
+sphere sphere4_object(vec3(-1,0,-1), 0.5, &sphere4_material);
+
+hitable* scene_objects[4] = {
+    &sphere1_object,
+    &sphere2_object,
+    &sphere3_object,
+    &sphere4_object
+};
+
+hitable_list world(scene_objects, 4);
+
 #ifdef RAYT_LINUX
 int main() {
-    hitable* list[4];
-    list[0] = new sphere(vec3(0,0.0,-1), 0.5, new lambertian(vec3(0.8, 0.3, 0.3)));
-    //list[0] = new sphere(vec3(0,0.0,-1), 0.5, new dielectric(1.5));
-    list[1] = new sphere(vec3(0,-100.5,-1), 100, new lambertian(vec3(0.8, 0.8, 0.0)));
-    list[2] = new sphere(vec3(1,0,-1), 0.5, new metal(vec3(0, 0.6, 0.2), 0.3)); 
-    //list[3] = new sphere(vec3(-1,0,-1), 0.5, new dielectric(1.1));
-    list[3] = new sphere(vec3(-1,0,-1), 0.5, new metal(vec3(0.9, 0.9, 0.9), 0.0));
-    hitable* world = new hitable_list(list, 4);
-
-    render_to_imagedata(world, image);
+    render_to_imagedata(&world, image);
     print_imagedata(image);
 }
 #endif
