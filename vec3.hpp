@@ -46,6 +46,7 @@ struct vec3 {
   float v[3];
 };
 
+#ifdef RAYT_LINUX
 inline std::istream& operator>>(std::istream& is, vec3 &t) {
   is >> t.v[0] >> t.v[1] >> t.v[2];
   return is;
@@ -55,6 +56,7 @@ inline std::ostream& operator<<(std::ostream& os, vec3& t) {
   os << t.v[0] << ' ' << t.v[1] << ' ' << t.v[2];
   return os;
 }
+#endif
 
 inline void vec3::make_unit_vector() {
   float k = 1.0 / length();

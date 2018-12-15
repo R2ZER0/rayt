@@ -1,4 +1,4 @@
-#define RAYT_LINUX
+#ifdef RAYT_LINUX
 
 #include "render.hpp"
 
@@ -72,3 +72,5 @@ int main() {
     render_to_imagedata(&world, image);
     print_imagedata(image);
 }
+
+#endif

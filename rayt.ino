@@ -1,17 +1,29 @@
 #define RAYT_ARDUINO
 
+#include <Arduino.h>
 #include "render.hpp"
 
+#define LED_PIN (4)
+
+int led_pin_mode = LOW;
+void led_toggle() {
+    led_pin_mode = !led_pin_mode;
+    digitalWrite(LED_PIN, led_pin_mode);
+}
+
 void _render_callback_to_serial(void* userdata, int x, int y, vec3 colour) {
-    Serial.write(x):
-    Serial.write('\t');
-    Serial.write(y);
-    Serial.write('\t');
-    Serial.write(colour[0]);
-    Serial.write('\t');
-    Serial.write(colour[1]);
-    Serial.write('\t');
-    Serial.writeln(colour[2]);
+
+    led_toggle();
+
+    Serial.print(x);
+    Serial.print((char)'\t');
+    Serial.print(y);
+    Serial.print((char)'\t');
+    Serial.print(colour[0]);
+    Serial.print((char)'\t');
+    Serial.print(colour[1]);
+    Serial.print((char)'\t');
+    Serial.println(colour[2]);
 }
 
 void render_to_serial(hitable* world, int xs, int ys) {
@@ -43,6 +55,10 @@ hitable_list world(scene_objects, 4);
 
 void setup() {
     Serial.begin(115200);
+    Serial.println("# Start");
+    pinMode(LED_PIN, OUTPUT);
+
+    led_toggle();
 }
 
 

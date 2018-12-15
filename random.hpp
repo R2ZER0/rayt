@@ -3,7 +3,7 @@
 
 #include "vec3.hpp"
 
-#ifdef RAYT_ARDUINO
+#if defined(RAYT_ARDUINO)
 float get_rand() {
     return (float)random(1000) / 1000.0;
 }
