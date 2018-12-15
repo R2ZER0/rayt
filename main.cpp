@@ -76,6 +76,7 @@ vec3 calc_colour(const ray& r, hitable *world, int depth) {
 
 struct imagedata {
         int xs, ys;
+        vec3* colourdata;
 };
 
 

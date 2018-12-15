@@ -5,7 +5,7 @@
 
 #ifdef RAYT_ARDUINO
 float get_rand() {
-    return (float)random(0, 1000) / 1000.0;
+    return (float)random(1000) / 1000.0;
 }
 
 #elif defined(RAYT_LINUX)
