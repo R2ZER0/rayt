@@ -1,7 +1,18 @@
 #include <iostream>
+#include <cfloat>
+
+// Platform
+//#define RAYT_ARDUINO
+#define RAYT_LINUX
+
+// Settings
+#define DEPTH_LIMIT 3
+#define RAYT_NO_MULTISAMPLE
+#define RAYT_DETERMINISTIC
+#define RAYT_NO_OPENMP
+
 #include "vec3.hpp"
 #include "ray.hpp"
-#include <cfloat>
 #include "hitable_list.hpp"
 #include "sphere.hpp"
 #include "camera.hpp"
@@ -22,8 +33,6 @@
  * - More options to dielectrics, like transparency, colour
  * - Textures
  */
-
-#define DEPTH_LIMIT 50
 
 /*
 vec3 calc_colour(const ray& r, hitable* world, int depth) {
@@ -71,8 +80,9 @@ struct imagedata {
 
 
 void print_imagedata(imagedata& img) {
-        const int ns = 1000;
-        const bool multisample = true;
+    #ifdef RAYT_MULTISAMPLE
+        const int ns = 100;
+    #endif
 
         hitable* list[4];
         list[0] = new sphere(vec3(0,0.0,-1), 0.5, new lambertian(vec3(0.8, 0.3, 0.3)));
@@ -88,14 +98,18 @@ void print_imagedata(imagedata& img) {
 
         vec3 imagedata[img.xs * img.ys];
 
+        #ifdef RAYT_OPENMP
         #pragma omp parallel for
+        #endif
         for(int j = 0; j < img.ys; ++j) {
+                #ifdef RAYT_OPENMP
                 #pragma omp parallel for
+                #endif
                 for(int i = 0; i < img.xs; ++i) {
 
                         vec3 colour(0.0, 0.0, 0.0);
                        
-                        if(multisample) { 
+                        #ifdef RAYT_MULTISAMPLE
                             for(int s = 0; s < ns; ++s) {
 
                                 float u = float(i + get_rand()) / float(img.xs);
@@ -108,13 +122,13 @@ void print_imagedata(imagedata& img) {
                             // correct for number of samples
                             colour /= float(ns);
 
-                        } else {
+                        #else
                             float u = float(i + 0.5) / float(img.xs);
                             float v = float(j + 0.5) / float(img.ys);
 
                             ray r = cam.get_ray(u, v);
                             colour = calc_colour(r, world, 0); 
-                        }
+                        #endif
 
                         // Gammar correction
                         colour = vec3( sqrt(colour[0]), sqrt(colour[1]), sqrt(colour[2]) );
@@ -142,7 +156,9 @@ void print_imagedata(imagedata& img) {
         }
 }
 
+#ifdef RAYT_LINUX
 int main() {
         imagedata image = { 1000, 500 };
         print_imagedata(image);
 }
+#endif
