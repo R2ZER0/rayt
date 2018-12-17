@@ -1,0 +1,8 @@
+{
+    "board": "esp8266:esp8266:d1_mini",
+    "configuration": "xtal=80,vt=flash,exception=enabled,eesz=4M,ip=lm2f,dbg=Disabled,lvl=None____,wipe=none,baud=921600",
+    "sketch": "rayt.ino",
+    "output": "../ArduinoOutput",
+    "port": "/dev/ttyUSB0",
+    "programmer": "AVR ISP"
+}

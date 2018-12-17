@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8"> 
+        <style>
+            #display {
+                width: 800;
+                height: 400;
+                border: 1px solid black;
+            }
+        </style>
+    </head>
+    <body onload="draw();">
+        <canvas id="display" width="800" height="400"></canvas>
+        <script>
+            var xsize = 400;
+            var ysize = 200;
+            var pxscale = 2;
+
+            function drawPx(ctx, x, y, r, g, b) {
+                ctx.fillStyle = "rgb("+Math.floor(r*255)+","+Math.floor(g*255)+","+Math.floor(b*255)+")";
+                ctx.fillRect(x*pxscale, y*pxscale, pxscale, pxscale);
+            }
+
+            function draw() {
+                var canvas = document.getElementById('display');
+                var ctx = canvas.getContext('2d');
+
+                connect(ctx);
+            }
+
+            function connect() {
+                var url = "ws://localhost:6502";
+
+                var connection = new WebSocket(url);
+
+                connection.onopen = function(e) {
+                    console.log('onopen', e);
+                }
+
+                connection.onmessage = function(e) {
+                    console.log('onmessage', e);
+                    var data = JSON.parse(e.data);
+                }
+            }
+        </script>
+    </body>
+</html>
